@@ -572,7 +572,71 @@ class CPlayerInput
 		return '';
 	}
 
+	//LMR - BEGIN
+	function playerNearSignPost() : bool
+	{		
+		var entities : array<CGameplayEntity>;
+		var i : int;
+			
+		FindGameplayEntitiesInSphere( entities, thePlayer.GetWorldPosition(), 10, 1,, FLAG_ExcludePlayer,, 'W3FastTravelEntity' );
+		
+		for ( i = 0; i < entities.Size(); i += 1 )
+		{
+			if ((W3FastTravelEntity)entities[i])
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function playerNearCamp() : bool
+	{
+		var entities : array< CGameplayEntity >;
+		var i : int;
+		
+		FindGameplayEntitiesInSphere( entities, thePlayer.GetWorldPosition(), 10, 1,, FLAG_ExcludePlayer,, 'W3Campfire' );
+		
+		for ( i = 0; i < entities.Size(); i += 1 )
+		{
+            if ((W3Campfire)entities[i])
+            {
+                return true;
+            }
+		}
+		return false;
+	}
 	
+	function playerNearFireSource() : bool
+	{
+		var entities : array< CGameplayEntity >;
+		var i : int;
+		
+		FindGameplayEntitiesInSphere( entities, thePlayer.GetWorldPosition(), 10, 1,, FLAG_ExcludePlayer,, 'W3FireSource' );
+		
+		for ( i = 0; i < entities.Size(); i += 1 )
+		{
+            if ((W3FireSource)entities[i])
+            {
+                return true;
+            }
+		}
+		return false;
+	}	
+	
+	function playerNearHorse() : bool
+	{
+		var ret : bool;
+        ret = false;
+			
+		if (VecDistanceSquared(thePlayer.GetWorldPosition(), thePlayer.GetHorseWithInventory().GetWorldPosition()) < 1600)
+		{
+            ret = true;
+		}
+
+        return ret;
+	}
+	//LMR - END		
 	
 	
 	
@@ -730,15 +794,27 @@ class CPlayerInput
 			&& !thePlayer.IsInInterior() && !thePlayer.IsInAir()
 			&& (isSpawnHorseSecondTap || theInput.LastUsedPCInput()) )
 		{
-			if ( thePlayer.IsHoldingItemInLHand () )
-			{
-				thePlayer.OnUseSelectedItem(true);
-				thePlayer.SetPlayerActionToRestore ( PATR_CallHorse );
-			}
-			else
-			{
-				theGame.OnSpawnPlayerHorse();
-			}			
+				//LMR - BEGIN
+				if( playerNearSignPost() || playerNearCamp() || playerNearFireSource() || playerNearHorse())
+				{			
+					if( isSpawnHorseSecondTap || theInput.LastUsedPCInput() )
+					{
+						if ( thePlayer.IsHoldingItemInLHand () )
+						{
+							thePlayer.OnUseSelectedItem(true);
+							thePlayer.SetPlayerActionToRestore ( PATR_CallHorse );
+						}
+						else
+						{
+							theGame.OnSpawnPlayerHorse();
+						}
+					}		
+				}
+				else
+				{
+					thePlayer.DisplayHudMessage("Roach is out of hearing range.");
+				}
+				//LMR - END
 		}
 		else if( isSpawnHorseSecondTap || theInput.LastUsedPCInput() )
 		{
